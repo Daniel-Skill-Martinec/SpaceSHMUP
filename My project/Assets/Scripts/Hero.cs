@@ -10,9 +10,11 @@ public class Hero : MonoBehaviour
     public float speed = 30;
     public float rollMult = -45;
     public float pitchMult = 30;
+    public GameObject projectilePrefab;
+    public float projectileSpeed = 40;
 
-    [Header("Dynamic")]
-    public float shieldLevel = 1;
+    [Header("Dynamic")][Range(0,4)][SerializeField]
+    private float _shieldLevel = 1;
     private GameObject lastTriggerGo = null;
 
     private void Awake()
@@ -46,6 +48,20 @@ public class Hero : MonoBehaviour
 
         //rotate the ship to make it feel more dynamic
         transform.rotation = Quaternion.Euler(vAxis * pitchMult, hAxis * rollMult, 0);
+
+        //allow the ship to fire
+        if(Input.GetKeyDown(KeyCode.Space))
+        {
+            TempFire();
+        }
+    }
+
+    void TempFire()
+    {
+        GameObject projGo = Instantiate<GameObject>(projectilePrefab);
+        projGo.transform.position = transform.position;
+        Rigidbody rigidB = projGo.GetComponent<Rigidbody>();
+        rigidB.velocity = Vector3.up * projectileSpeed;
     }
 
     private void OnTriggerEnter(Collider other)
@@ -65,6 +81,20 @@ public class Hero : MonoBehaviour
         else
         {
             Debug.LogWarning("Shield Trigger Hit by Non-Enemy" + go.name);
+        }
+    }
+
+    public float shieldLevel
+    {
+        get { return (_shieldLevel); }
+        private set
+        {
+            _shieldLevel = Mathf.Min(value, 4);
+            if (value < 0)
+            {
+                Destroy(this.gameObject); //destroy the hero, because shield is gone.
+                Main.HERO_DIED();
+            }
         }
     }
 }
